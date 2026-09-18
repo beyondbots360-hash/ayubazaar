@@ -1,16 +1,55 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { PRODUCTS } from "@/data/products";
+import { PRODUCTS, ProductDetail } from "@/data/products";
 import { motion } from "framer-motion";
 
+interface RawDbProduct {
+  slug: string;
+  price: number;
+  original_price: number;
+  description: string;
+  in_stock: boolean;
+}
+
 export default function ProductsSection() {
+  const [products, setProducts] = useState<ProductDetail[]>(PRODUCTS);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.products)) {
+          setProducts((prev) =>
+            prev.map((staticItem) => {
+              const dbItem = data.products.find((p: RawDbProduct) => p.slug === staticItem.slug);
+              if (dbItem) {
+                const discount =
+                  dbItem.original_price > dbItem.price
+                    ? `Save ${Math.round(((dbItem.original_price - dbItem.price) / dbItem.original_price) * 100)}%`
+                    : "";
+                return {
+                  ...staticItem,
+                  price: `₹${Number(dbItem.price).toLocaleString("en-IN")}`,
+                  originalPrice: `₹${Number(dbItem.original_price).toLocaleString("en-IN")}`,
+                  discount,
+                  description: dbItem.description || staticItem.description,
+                };
+              }
+              return staticItem;
+            })
+          );
+        }
+      })
+      .catch((err) => console.error("Failed to fetch live products:", err));
+  }, []);
+
   return (
     <section id="products" className="py-16 sm:py-20 bg-[#F8F5EC] relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Heading with Ornamental Lines */}
         <div className="text-center max-w-2xl mx-auto mb-14">
           <div className="flex items-center justify-center gap-4 mb-2">
             <div className="h-[1px] w-12 sm:w-16 bg-gradient-to-r from-transparent to-[#D6A83F]" />
@@ -24,9 +63,8 @@ export default function ProductsSection() {
           </p>
         </div>
 
-        {/* 3 Flagship Product Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-8">
-          {PRODUCTS.map((product, index) => (
+          {products.map((product, index) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 20 }}
@@ -36,7 +74,6 @@ export default function ProductsSection() {
               whileHover={{ y: -6 }}
               className="group bg-[#FAF7F0] rounded-3xl p-5 border border-[#E9E2D1] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
             >
-              {/* Image Container */}
               <div>
                 <div className="relative w-full h-52 sm:h-56 rounded-2xl overflow-hidden bg-white/90 border border-[#EBE4D5] mb-6 flex items-center justify-center">
                   <Image
@@ -47,7 +84,6 @@ export default function ProductsSection() {
                   />
                 </div>
 
-                {/* Content */}
                 <div className="text-center px-2">
                   <h3 className="text-xl font-serif font-bold text-[#174A3A] tracking-tight mb-2.5">
                     {product.name}
@@ -58,7 +94,6 @@ export default function ProductsSection() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2 pb-2">
                 <Link
                   href={`/products/${product.slug}`}

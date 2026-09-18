@@ -3,7 +3,8 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Home, ArrowLeft } from "lucide-react";
-import { PRODUCTS, getProductBySlug } from "@/data/products";
+import { PRODUCTS } from "@/data/products";
+import { getLiveProductBySlug, getLiveProducts } from "@/lib/supabase/products";
 import ProductHero from "@/components/product/ProductHero";
 import ProductBenefits from "@/components/product/ProductBenefits";
 import ProductIngredients from "@/components/product/ProductIngredients";
@@ -16,6 +17,8 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+export const revalidate = 0;
+
 export async function generateStaticParams() {
   return PRODUCTS.map((product) => ({
     slug: product.slug,
@@ -24,7 +27,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getLiveProductBySlug(slug);
 
   if (!product) {
     return {
@@ -52,18 +55,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const [product, allProducts] = await Promise.all([
+    getLiveProductBySlug(slug),
+    getLiveProducts(),
+  ]);
 
   if (!product) {
     notFound();
   }
 
-  // Other products for quick navigation
-  const otherProducts = PRODUCTS.filter((p) => p.slug !== product.slug);
+  const otherProducts = allProducts.filter((p) => p.slug !== product.slug);
 
   return (
     <div className="min-h-screen bg-[#F8F5EC] pb-20 md:pb-0">
-      {/* Breadcrumb Bar */}
       <div className="bg-[#FAF7F0] border-b border-[#E8E1CF] py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex items-center justify-between text-xs font-medium text-[#6F7A71]">
@@ -99,25 +103,13 @@ export default async function ProductPage({ params }: Props) {
         </div>
       </div>
 
-      {/* 1. Product Hero (Gallery, Pricing, Purchase CTAs) */}
       <ProductHero product={product} />
-
-      {/* 2. Key Benefits (4 luxury cards) */}
       <ProductBenefits benefits={product.benefits} />
-
-      {/* 3. Botanical Ingredients (Sanskrit names & actions) */}
       <ProductIngredients ingredients={product.ingredients} />
-
-      {/* 4. How to Consume & Use (3-Step Illustrated Timeline) */}
       <ProductUsage usageSteps={product.usageSteps} />
-
-      {/* 5. Frequently Asked Questions (6 animated accordions) */}
       <ProductFaq faqs={product.faqs} />
-
-      {/* 6. Medical & Ayurvedic Disclaimer */}
       <ProductDisclaimer />
 
-      {/* 7. Explore Other Flagship Formulations */}
       <section className="py-14 bg-[#FAF7F0] border-t border-[#E8E1CF]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
@@ -169,7 +161,6 @@ export default async function ProductPage({ params }: Props) {
         </div>
       </section>
 
-      {/* 8. Sticky Mobile Bottom Bar */}
       <StickyMobileCta product={product} />
     </div>
   );

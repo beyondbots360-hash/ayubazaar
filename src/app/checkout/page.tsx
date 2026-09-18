@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { PRODUCTS, getProductBySlug } from "@/data/products";
+import { PRODUCTS, ProductDetail, getProductBySlug } from "@/data/products";
 import ShippingForm, { ShippingData } from "@/components/checkout/ShippingForm";
 import OrderSummaryCard from "@/components/checkout/OrderSummaryCard";
 import { ArrowLeft, ChevronRight, ShieldCheck, AlertCircle } from "lucide-react";
@@ -13,6 +13,12 @@ declare global {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Razorpay: any;
   }
+}
+
+interface RawDbProduct {
+  slug: string;
+  price: number;
+  original_price: number;
 }
 
 function loadRazorpayScript(): Promise<boolean> {
@@ -37,8 +43,33 @@ function CheckoutContent() {
   const productSlugParam = searchParams.get("product") || "yameny-khalta";
   const qtyParam = parseInt(searchParams.get("qty") || "1", 10);
 
-  const product = getProductBySlug(productSlugParam) || PRODUCTS[0];
+  const [product, setProduct] = useState<ProductDetail>(
+    getProductBySlug(productSlugParam) || PRODUCTS[0]
+  );
   const [quantity, setQuantity] = useState(isNaN(qtyParam) || qtyParam < 1 ? 1 : qtyParam);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && Array.isArray(data.products)) {
+          const dbItem = data.products.find((p: RawDbProduct) => p.slug === productSlugParam);
+          if (dbItem) {
+            const discount =
+              dbItem.original_price > dbItem.price
+                ? `Save ${Math.round(((dbItem.original_price - dbItem.price) / dbItem.original_price) * 100)}%`
+                : "";
+            setProduct((prev) => ({
+              ...prev,
+              price: `₹${Number(dbItem.price).toLocaleString("en-IN")}`,
+              originalPrice: `₹${Number(dbItem.original_price).toLocaleString("en-IN")}`,
+              discount,
+            }));
+          }
+        }
+      })
+      .catch((err) => console.error(err));
+  }, [productSlugParam]);
 
   const [shippingData, setShippingData] = useState<ShippingData>({
     fullName: "",
@@ -107,8 +138,7 @@ function CheckoutContent() {
     setIsLoading(true);
 
     try {
-      // 1. Create order on server
-      const orderRes = await fetch("/api/razorpay/create-order", {
+      const createRes = await fetch("/api/razorpay/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -117,21 +147,22 @@ function CheckoutContent() {
         }),
       });
 
-      const orderData = await orderRes.json();
+      const createData = await createRes.json();
 
-      if (!orderData.success) {
-        throw new Error(orderData.error || "Failed to initialize order.");
+      if (!createRes.ok || !createData.success) {
+        throw new Error(createData.error || "Failed to initialize order payment session.");
       }
 
-      // 2. Handle Mock Order (if testing without live keys)
-      if (orderData.isMock) {
+      const { orderId, amount, currency, keyId, isMock } = createData;
+
+      if (isMock) {
         const verifyRes = await fetch("/api/razorpay/verify-payment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            razorpay_order_id: orderData.orderId,
+            razorpay_order_id: orderId,
             razorpay_payment_id: `pay_mock_${Date.now()}`,
-            razorpay_signature: "mock_signature",
+            razorpay_signature: "mock_signature_bypass",
             customer: shippingData,
             productSlug: product.slug,
             quantity,
@@ -139,40 +170,33 @@ function CheckoutContent() {
         });
 
         const verifyData = await verifyRes.json();
-        if (verifyData.success) {
+        if (verifyRes.ok && verifyData.success) {
           router.push(
-            `/order-success?orderId=${verifyData.orderId}&paymentId=${verifyData.paymentId}&product=${product.slug}&qty=${quantity}`
+            `/order-success?orderId=${orderId}&paymentId=${verifyData.paymentId}&product=${product.slug}&qty=${quantity}`
           );
           return;
         } else {
-          throw new Error(verifyData.error || "Payment verification failed.");
+          throw new Error(verifyData.error || "Verification failed during simulated flow.");
         }
       }
 
-      // 3. Ensure Razorpay SDK is loaded
-      const isLoaded = await loadRazorpayScript();
-      if (!isLoaded || typeof window.Razorpay === "undefined") {
-        throw new Error("Razorpay SDK could not be loaded. Please check your internet connection.");
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error("Unable to load Razorpay payment gateway. Please check your connection.");
       }
 
       const options = {
-        key: orderData.keyId,
-        amount: orderData.amount,
-        currency: orderData.currency,
+        key: keyId,
+        amount: amount,
+        currency: currency,
         name: "AyuBazaar",
         description: `${product.name} (Qty: ${quantity})`,
-        image: "/images/logo.png",
-        order_id: orderData.orderId,
-        prefill: {
-          name: shippingData.fullName,
-          email: shippingData.email,
-          contact: shippingData.phone,
-        },
-        theme: {
-          color: "#174A3A",
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        handler: async function (response: any) {
+        order_id: orderId,
+        handler: async function (response: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) {
           try {
             const verifyRes = await fetch("/api/razorpay/verify-payment", {
               method: "POST",
@@ -188,19 +212,26 @@ function CheckoutContent() {
             });
 
             const verifyData = await verifyRes.json();
-            if (verifyData.success) {
+            if (verifyRes.ok && verifyData.success) {
               router.push(
-                `/order-success?orderId=${verifyData.orderId}&paymentId=${verifyData.paymentId}&product=${product.slug}&qty=${quantity}`
+                `/order-success?orderId=${response.razorpay_order_id}&paymentId=${response.razorpay_payment_id}&product=${product.slug}&qty=${quantity}`
               );
             } else {
-              setServerError("Payment signature validation failed. Please contact support.");
+              setServerError(verifyData.error || "Payment verification failed. Please contact support.");
               setIsLoading(false);
             }
-          } catch (verifyErr) {
-            console.error("Verification error:", verifyErr);
-            setServerError("An error occurred while verifying payment.");
+          } catch {
+            setServerError("Payment completed but verification failed. Please contact us.");
             setIsLoading(false);
           }
+        },
+        prefill: {
+          name: shippingData.fullName,
+          email: shippingData.email,
+          contact: shippingData.phone,
+        },
+        theme: {
+          color: "#174A3A",
         },
         modal: {
           ondismiss: function () {
@@ -209,63 +240,72 @@ function CheckoutContent() {
         },
       };
 
-      const rzpInstance = new window.Razorpay(options);
-      rzpInstance.open();
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (response: { error: { description: string } }) {
+        setServerError(response.error.description || "Payment failed. Please try another method.");
+        setIsLoading(false);
+      });
+      rzp.open();
     } catch (err: unknown) {
-      console.error("Checkout error:", err);
-      setServerError(err instanceof Error ? err.message : "Something went wrong during checkout.");
+      const msg = err instanceof Error ? err.message : "An error occurred while processing checkout.";
+      setServerError(msg);
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F5EC] py-8 sm:py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Navigation Breadcrumb */}
-        <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#E8E1CE]">
-          <nav className="flex items-center gap-2 text-xs font-medium text-[#6F7A71]">
-            <Link href="/" className="hover:text-[#174A3A]">
-              Home
+    <div className="min-h-screen bg-[#F8F5EC] pb-20">
+      <div className="bg-[#FAF7F0] border-b border-[#E7DFC8] py-3.5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex items-center justify-between text-xs font-semibold text-[#6C776E]">
+            <div className="flex items-center gap-2">
+              <Link href="/" className="hover:text-[#174A3A] transition-colors">
+                Home
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-[#B5BFB7]" />
+              <Link href={`/products/${product.slug}`} className="hover:text-[#174A3A] transition-colors">
+                {product.name}
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-[#B5BFB7]" />
+              <span className="text-[#174A3A] font-bold">Secure Checkout</span>
+            </div>
+
+            <Link
+              href={`/products/${product.slug}`}
+              className="inline-flex items-center gap-1.5 text-[#174A3A] hover:underline"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Back to Product</span>
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-[#A5B0A7]" />
-            <Link href={`/products/${product.slug}`} className="hover:text-[#174A3A]">
-              {product.name}
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-[#A5B0A7]" />
-            <span className="text-[#174A3A] font-bold">Secure Checkout</span>
           </nav>
-
-          <Link
-            href={`/products/${product.slug}`}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#174A3A] hover:underline"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to Product</span>
-          </Link>
         </div>
+      </div>
 
-        {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-serif text-[#174A3A] tracking-tight">
-            Express Checkout
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10">
+        <div className="text-center sm:text-left mb-8 sm:mb-10">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF7F0] border border-[#E5DFCE] text-[#A47128] text-xs font-bold uppercase tracking-wider mb-2">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>256-Bit Encrypted Checkout</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-[#174A3A] tracking-tight">
+            Complete Your Ayurvedic Order
           </h1>
-          <p className="text-sm text-[#5C665F] mt-1 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#3B7A57]" />
-            <span>Safe, encrypted payment & express delivery across India</span>
+          <p className="text-xs sm:text-sm text-[#556157] mt-1">
+            Fill in your delivery address and pay securely via Razorpay.
           </p>
         </div>
 
-        {/* Server Error Alert */}
         {serverError && (
-          <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 flex items-start gap-3 text-red-700 text-sm">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <p>{serverError}</p>
+          <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-red-50 border border-red-200 flex items-start gap-3 text-red-800 text-sm shadow-xs">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-red-900">Payment Notice</p>
+              <p className="mt-0.5 text-xs text-red-700 leading-relaxed">{serverError}</p>
+            </div>
           </div>
         )}
 
-        {/* 2-Column Responsive Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* Left Column: Shipping Form */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           <div className="lg:col-span-7">
             <ShippingForm
               data={shippingData}
@@ -274,7 +314,6 @@ function CheckoutContent() {
             />
           </div>
 
-          {/* Right Column: Order Summary & Pay */}
           <div className="lg:col-span-5">
             <OrderSummaryCard
               product={product}
@@ -295,7 +334,7 @@ export default function CheckoutPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#F8F5EC] flex items-center justify-center">
-          <p className="text-sm text-[#5C665F] font-serif">Loading secure checkout...</p>
+          <div className="w-8 h-8 border-3 border-[#174A3A] border-t-[#D6A83F] rounded-full animate-spin" />
         </div>
       }
     >

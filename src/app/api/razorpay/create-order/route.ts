@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { razorpay } from "@/lib/razorpay";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getProductBySlug } from "@/data/products";
 
 export async function POST(req: NextRequest) {
@@ -14,23 +15,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Always fetch trusted price from server dataset
-    const product = getProductBySlug(productSlug);
-    if (!product) {
-      return NextResponse.json(
-        { success: false, error: "Product not found" },
-        { status: 404 }
-      );
+    let unitPrice = 0;
+    let productName = productSlug;
+
+    const { data: dbProduct } = await supabaseAdmin
+      .from("products")
+      .select("id, name, price, in_stock")
+      .eq("slug", productSlug)
+      .single();
+
+    if (dbProduct) {
+      if (!dbProduct.in_stock) {
+        return NextResponse.json(
+          { success: false, error: "Sorry, this product is currently out of stock." },
+          { status: 400 }
+        );
+      }
+      unitPrice = Number(dbProduct.price);
+      productName = dbProduct.name;
+    } else {
+      const staticProduct = getProductBySlug(productSlug);
+      if (!staticProduct) {
+        return NextResponse.json(
+          { success: false, error: "Product not found" },
+          { status: 404 }
+        );
+      }
+      unitPrice = parseInt(staticProduct.price.replace(/[^0-9]/g, ""), 10);
+      productName = staticProduct.name;
     }
 
-    // Extract numerical price from string e.g. "₹1,499" -> 1499
-    const unitPriceNumber = parseInt(product.price.replace(/[^0-9]/g, ""), 10);
-    const totalAmountInRupees = unitPriceNumber * quantity;
+    const totalAmountInRupees = unitPrice * quantity;
     const amountInPaise = totalAmountInRupees * 100;
-
     const receiptId = `rcpt_${Date.now().toString().slice(-8)}`;
 
-    // If real keys are not provided or default placeholder is used, generate mock order ID for testing
     const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
     const isMock = !keyId || keyId === "rzp_test_placeholder";
 
@@ -43,7 +61,7 @@ export async function POST(req: NextRequest) {
           currency: "INR",
           receipt: receiptId,
           notes: {
-            productName: product.name,
+            productName,
             quantity: quantity.toString(),
           },
         });
@@ -69,7 +87,7 @@ export async function POST(req: NextRequest) {
       isMock,
     });
   } catch (error: unknown) {
-    console.error("Error creating order:", error);
+    console.error("Order creation error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
