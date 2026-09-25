@@ -50,7 +50,7 @@ export default function ProductHero({ product }: ProductHeroProps) {
   const whatsappMessage = encodeURIComponent(
     `Hello AyuBazaar! I would like to order *${product.name}* (Quantity: ${quantity}) at ${product.price}. Please assist with my delivery address and payment.`
   );
-  const whatsappUrl = `https://wa.me/919876543210?text=${whatsappMessage}`;
+  const whatsappUrl = `https://wa.me/918929515262?text=${whatsappMessage}`;
 
   return (
     <section className="py-8 sm:py-12 bg-[#F8F5EC]">

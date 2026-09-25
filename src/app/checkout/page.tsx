@@ -291,7 +291,11 @@ function CheckoutContent() {
             Complete Your Ayurvedic Order
           </h1>
           <p className="text-xs sm:text-sm text-[#556157] mt-1">
-            Fill in your delivery address and pay securely via Razorpay.
+            Fill in your delivery address and pay securely via Razorpay. Need help? Call or WhatsApp us at{" "}
+            <a href="tel:+918929515262" className="font-bold text-[#174A3A] hover:underline">
+              +91 89295 15262
+            </a>
+            .
           </p>
         </div>
 

@@ -12,7 +12,7 @@ export default function StickyMobileCta({ product }: StickyMobileCtaProps) {
   const whatsappMessage = encodeURIComponent(
     `Hello AyuBazaar! I would like to order *${product.name}* at ${product.price}. Please confirm my order.`
   );
-  const whatsappUrl = `https://wa.me/919876543210?text=${whatsappMessage}`;
+  const whatsappUrl = `https://wa.me/918929515262?text=${whatsappMessage}`;
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF7F0]/95 backdrop-blur-md border-t border-[#E5DFCE] px-4 py-3 shadow-xl">

@@ -74,7 +74,7 @@ export default function Footer() {
                 <YoutubeIcon />
               </a>
               <a
-                href="https://wa.me/919876543210"
+                href="https://wa.me/918929515262"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="WhatsApp"
@@ -134,8 +134,8 @@ export default function Footer() {
             <ul className="space-y-3.5 text-sm">
               <li className="flex items-center gap-3 text-[#4F5951]">
                 <Phone className="w-4 h-4 text-[#174A3A] shrink-0" />
-                <a href="tel:+919876543210" className="hover:text-[#174A3A] transition-colors">
-                  +91 98765 43210
+                <a href="tel:+918929515262" className="hover:text-[#174A3A] transition-colors font-medium">
+                  +91 89295 15262
                 </a>
               </li>
               <li className="flex items-center gap-3 text-[#4F5951]">
@@ -147,12 +147,12 @@ export default function Footer() {
               <li className="flex items-center gap-3 text-[#4F5951]">
                 <MessageCircle className="w-4 h-4 text-[#3B7A57] shrink-0" />
                 <a
-                  href="https://wa.me/919876543210"
+                  href="https://wa.me/918929515262"
                   target="_blank"
                   rel="noreferrer"
                   className="hover:text-[#174A3A] transition-colors font-medium"
                 >
-                  Chat on WhatsApp
+                  WhatsApp: +91 89295 15262
                 </a>
               </li>
               <li className="flex items-center gap-3 text-[#4F5951]">

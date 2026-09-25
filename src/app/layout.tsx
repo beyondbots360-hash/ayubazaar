@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Serif_Display, Manrope } from "next/font/google";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import FloatingContact from "@/components/layout/FloatingContact";
 import "./globals.css";
 
 const dmSerif = DM_Serif_Display({
@@ -52,6 +53,7 @@ export default function RootLayout({
         <Navbar />
         <main className="flex-grow">{children}</main>
         <Footer />
+        <FloatingContact />
       </body>
     </html>
   );

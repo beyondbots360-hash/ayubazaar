@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Leaf, Menu, X, ArrowRight } from "lucide-react";
+import { Leaf, Menu, X, ArrowRight, Phone } from "lucide-react";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -53,8 +53,15 @@ export default function Navbar() {
             </Link>
           </nav>
 
-          {/* Right Action Button */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Right Action Button & Contact */}
+          <div className="hidden md:flex items-center gap-5">
+            <a
+              href="tel:+918929515262"
+              className="inline-flex items-center gap-2 text-xs font-bold text-[#174A3A] hover:text-[#A47128] transition-colors bg-[#FAF7F0] px-3.5 py-2 rounded-full border border-[#E8E1CE] shadow-2xs"
+            >
+              <Phone className="w-3.5 h-3.5 text-[#3B7A57]" />
+              <span>+91 89295 15262</span>
+            </a>
             <Link
               href="/#products"
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#174A3A] text-white text-sm font-semibold shadow-md hover:bg-[#10362A] hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
@@ -106,10 +113,18 @@ export default function Navbar() {
             <Link
               href="/#footer"
               onClick={() => setMobileMenuOpen(false)}
-              className="text-base font-medium text-[#465349] hover:text-[#174A3A] py-1"
+              className="text-base font-medium text-[#465349] hover:text-[#174A3A] py-1 border-b border-[#E8E1CF]"
             >
               Contact
             </Link>
+            <a
+              href="tel:+918929515262"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 text-base font-bold text-[#174A3A] py-1"
+            >
+              <Phone className="w-4 h-4 text-[#3B7A57]" />
+              <span>Call: +91 89295 15262</span>
+            </a>
           </nav>
           <div className="pt-2">
             <Link

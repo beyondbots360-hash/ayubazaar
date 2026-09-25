@@ -193,7 +193,7 @@ export const PRODUCTS: ProductDetail[] = [
       {
         question: "Can I order via Cash on Delivery (COD)?",
         answer:
-          "We offer secure prepaid online payment via Razorpay with fast dispatch, as well as assistance via WhatsApp for express delivery inquiries.",
+          "We offer secure prepaid online payment via Razorpay with fast dispatch, as well as assistance via WhatsApp (+91 89295 15262) for express delivery inquiries.",
       },
     ],
   },
