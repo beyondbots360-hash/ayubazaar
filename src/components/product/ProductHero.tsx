@@ -120,6 +120,29 @@ export default function ProductHero({ product }: ProductHeroProps) {
               </p>
             </div>
 
+            {/* Free Gift Offer Banner for Yameny Khalta */}
+            {product.slug === "yameny-khalta" && (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-[#FAF0E6] to-[#FAF7F0] border-2 border-[#D6A83F]/40 shadow-xs flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[#D6A83F]/20 flex items-center justify-center shrink-0 mt-0.5 border border-[#D6A83F]/30">
+                  <Sparkles className="w-5 h-5 text-[#A47128]" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#11382C] bg-[#D6A83F]/30 px-2 py-0.5 rounded">
+                      Special Combo Offer
+                    </span>
+                    <span className="text-xs font-bold text-[#A47128]">Save ₹1,899</span>
+                  </div>
+                  <h4 className="text-sm font-serif font-bold text-[#174A3A]">
+                    Includes FREE Lava 31 Gold Vitality Oil (Full Size)
+                  </h4>
+                  <p className="text-xs text-[#546056] leading-relaxed">
+                    Every jar of Yameny Khalta includes a complimentary full-size bottle of Lava 31 Gold Ayurvedic Men&apos;s Wellness Oil for complete internal &amp; external vigor.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Long Description */}
             <p className="text-sm sm:text-base text-[#465349] leading-relaxed">
               {product.longDescription}

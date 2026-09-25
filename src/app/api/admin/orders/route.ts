@@ -36,7 +36,7 @@ export async function PATCH(req: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from("orders")
-      .update({ fulfillment_status })
+      .update({ status: fulfillment_status })
       .eq("id", orderId)
       .select()
       .single();

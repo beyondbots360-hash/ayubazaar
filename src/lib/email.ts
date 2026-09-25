@@ -23,7 +23,7 @@ export interface OrderEmailPayload {
 
 export async function sendOrderAlertEmail(payload: OrderEmailPayload): Promise<boolean> {
   const { orderId, paymentId, customer, product } = payload;
-  const adminEmail = process.env.ADMIN_EMAIL || "orders@ayubazaar.com";
+  const adminEmail = process.env.ADMIN_EMAIL || "info@ayubazaar.in";
 
   const emailHtml = `
     <!DOCTYPE html>
@@ -131,13 +131,18 @@ export async function sendOrderAlertEmail(payload: OrderEmailPayload): Promise<b
   // If SMTP environment variables are configured, send real email
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
+      const port = Number(process.env.SMTP_PORT) || 465;
       const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || "smtp.gmail.com",
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: Number(process.env.SMTP_PORT) === 465,
+        host: process.env.SMTP_HOST || "smtp.ayubazaar.in",
+        port,
+        secure: port === 465,
         auth: {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
+        },
+        tls: {
+          // Allows connection even if cPanel uses a shared server SSL certificate
+          rejectUnauthorized: false,
         },
       });
 

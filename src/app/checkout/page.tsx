@@ -226,9 +226,9 @@ function CheckoutContent() {
           }
         },
         prefill: {
-          name: shippingData.fullName,
-          email: shippingData.email,
-          contact: shippingData.phone,
+          name: shippingData.fullName.trim(),
+          email: shippingData.email?.trim() || "",
+          contact: shippingData.phone.replace(/[^0-9]/g, ""),
         },
         theme: {
           color: "#174A3A",

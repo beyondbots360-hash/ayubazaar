@@ -5,22 +5,25 @@ import { MessageCircle, MapPin, Phone, Mail, Clock } from "lucide-react";
 
 interface Order {
   id: string;
+  order_number?: string;
   razorpay_order_id: string;
   razorpay_payment_id: string;
   product_name: string;
   quantity: number;
-  unit_price: number;
+  unit_price?: number;
   total_amount: number;
   customer_name: string;
   customer_phone: string;
   customer_email: string | null;
-  shipping_address: string;
+  address_line?: string;
+  shipping_address?: string;
   landmark: string | null;
   city: string;
   state: string;
   pincode: string;
-  payment_status: string;
-  fulfillment_status: string;
+  status?: string;
+  payment_status?: string;
+  fulfillment_status?: string;
   created_at: string;
 }
 
@@ -38,7 +41,11 @@ export default function OrdersTable({ initialOrders }: { initialOrders: Order[] 
       });
       if (res.ok) {
         setOrders((prev) =>
-          prev.map((o) => (o.id === orderId ? { ...o, fulfillment_status: newStatus } : o))
+          prev.map((o) =>
+            o.id === orderId
+              ? { ...o, status: newStatus, fulfillment_status: newStatus }
+              : o
+          )
         );
       }
     } catch (err) {
@@ -83,7 +90,7 @@ export default function OrdersTable({ initialOrders }: { initialOrders: Order[] 
                   {order.customer_name}
                 </span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  {order.payment_status}
+                  {order.status || order.payment_status || "paid"}
                 </span>
                 <span className="text-xs text-[#8C988F]">
                   {new Date(order.created_at).toLocaleString("en-IN")}
@@ -102,7 +109,7 @@ export default function OrdersTable({ initialOrders }: { initialOrders: Order[] 
                 <div className="flex items-start gap-2">
                   <MapPin className="w-3.5 h-3.5 text-[#D6A83F] shrink-0 mt-0.5" />
                   <span>
-                    {order.shipping_address}
+                    {order.address_line || order.shipping_address}
                     {order.landmark ? `, Landmark: ${order.landmark}` : ""},{" "}
                     {order.city}, {order.state} - {order.pincode}
                   </span>
@@ -126,7 +133,11 @@ export default function OrdersTable({ initialOrders }: { initialOrders: Order[] 
               <button
                 type="button"
                 onClick={() =>
-                  openWhatsApp(order.customer_phone, order.customer_name, order.razorpay_order_id)
+                  openWhatsApp(
+                    order.customer_phone,
+                    order.customer_name,
+                    order.order_number || order.razorpay_order_id
+                  )
                 }
                 className="w-full sm:w-auto px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-colors"
               >
@@ -137,12 +148,12 @@ export default function OrdersTable({ initialOrders }: { initialOrders: Order[] 
               <div className="w-full sm:w-auto flex items-center gap-2">
                 <span className="text-xs font-semibold text-[#78857C]">Status:</span>
                 <select
-                  value={order.fulfillment_status}
+                  value={order.status || order.fulfillment_status || "paid"}
                   disabled={updatingId === order.id}
                   onChange={(e) => updateStatus(order.id, e.target.value)}
                   className="px-3 py-1.5 rounded-lg bg-[#F8F5EC] border border-[#E9E2D1] text-xs font-bold text-[#174A3A] focus:outline-none focus:ring-2 focus:ring-[#D6A83F]"
                 >
-                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
                   <option value="processing">Processing</option>
                   <option value="dispatched">Dispatched</option>
                   <option value="delivered">Delivered</option>
@@ -151,7 +162,7 @@ export default function OrdersTable({ initialOrders }: { initialOrders: Order[] 
               </div>
 
               <div className="text-[11px] text-[#8C988F] text-right font-mono">
-                Order: {order.razorpay_order_id}
+                Order: {order.order_number || order.razorpay_order_id}
               </div>
             </div>
           </div>

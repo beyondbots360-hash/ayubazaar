@@ -16,7 +16,8 @@ export interface DbProductRow {
   description: string;
   short_description: string;
   long_description: string | null;
-  image_url: string;
+  image?: string;
+  image_url?: string;
   in_stock: boolean;
   created_at: string;
   updated_at: string;
@@ -28,7 +29,7 @@ export function mapDbProductToDetail(
   relational?: {
     benefits?: Array<{ title: string; description: string; icon_name: string }>;
     ingredients?: Array<{ name: string; sanskrit_name: string; property: string }>;
-    usageSteps?: Array<{ step_order: number; title: string; instruction: string; tip?: string }>;
+    usageSteps?: Array<{ step?: number; step_order?: number; title: string; instruction: string; tip?: string }>;
     faqs?: Array<{ question: string; answer: string }>;
   }
 ): ProductDetail {
@@ -55,7 +56,7 @@ export function mapDbProductToDetail(
 
   const usageSteps = relational?.usageSteps?.length
     ? relational.usageSteps.map((u) => ({
-        step: u.step_order,
+        step: u.step ?? u.step_order ?? 1,
         title: u.title,
         instruction: u.instruction,
         tip: u.tip,
@@ -81,8 +82,8 @@ export function mapDbProductToDetail(
     discount: discountPercent > 0 ? `Save ${discountPercent}%` : "",
     rating: Number(p.rating) || fallbackDetail?.rating || 4.9,
     reviewCount: Number(p.review_count) || fallbackDetail?.reviewCount || 100,
-    image: p.image_url || fallbackDetail?.image || "/products/khalta.png",
-    gallery: fallbackDetail?.gallery || [p.image_url || "/products/khalta.png"],
+    image: p.image || p.image_url || fallbackDetail?.image || "/images/products/yameny-khalta-combo.jpg",
+    gallery: fallbackDetail?.gallery || [p.image || p.image_url || "/images/products/yameny-khalta-combo.jpg"],
     badge: p.badge || fallbackDetail?.badge || "Authentic",
     description: p.description,
     shortDescription: p.short_description || fallbackDetail?.shortDescription || "",
@@ -130,7 +131,7 @@ export async function getLiveProductBySlug(slug: string): Promise<ProductDetail 
     const [benefitsRes, ingredientsRes, usageRes, faqsRes] = await Promise.all([
       supabaseAdmin.from("product_benefits").select("*").eq("product_id", p.id),
       supabaseAdmin.from("product_ingredients").select("*").eq("product_id", p.id),
-      supabaseAdmin.from("product_usage_steps").select("*").eq("product_id", p.id).order("step_order", { ascending: true }),
+      supabaseAdmin.from("product_usage_steps").select("*").eq("product_id", p.id).order("step", { ascending: true }),
       supabaseAdmin.from("product_faqs").select("*").eq("product_id", p.id),
     ]);
 

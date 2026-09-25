@@ -43,7 +43,6 @@ export async function POST(req: NextRequest) {
 
     let unitPrice = 0;
     let productName = productSlug;
-    let productId: string | null = null;
 
     const { data: dbProduct } = await supabaseAdmin
       .from("products")
@@ -52,7 +51,6 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (dbProduct) {
-      productId = dbProduct.id;
       unitPrice = Number(dbProduct.price);
       productName = dbProduct.name;
     } else {
@@ -67,42 +65,51 @@ export async function POST(req: NextRequest) {
     const paymentId = razorpay_payment_id || `pay_mock_${Date.now()}`;
 
     try {
-      await supabaseAdmin.from("orders").insert([
+      const orderNumber = `AYU-${Date.now().toString().slice(-6)}`;
+      const { error: insertErr } = await supabaseAdmin.from("orders").insert([
         {
+          order_number: orderNumber,
           razorpay_order_id,
           razorpay_payment_id: paymentId,
-          product_id: productId,
+          status: "paid",
+          customer_name: customer.fullName.trim(),
+          customer_phone: customer.phone.replace(/[^0-9]/g, ""),
+          customer_email: customer.email?.trim() || "orders@ayubazaar.in",
+          address_line: customer.addressLine.trim(),
+          landmark: customer.landmark?.trim() || null,
+          city: customer.city.trim(),
+          state: customer.state.trim(),
+          pincode: customer.pincode.trim(),
           product_name: productName,
+          product_slug: productSlug,
           quantity,
-          unit_price: unitPrice,
           total_amount: totalAmount,
-          customer_name: customer.fullName,
-          customer_phone: customer.phone,
-          customer_email: customer.email || null,
-          shipping_address: customer.addressLine,
-          landmark: customer.landmark || null,
-          city: customer.city,
-          state: customer.state,
-          pincode: customer.pincode,
-          payment_status: "paid",
-          fulfillment_status: "pending",
         },
       ]);
+      if (insertErr) {
+        console.error("Supabase order insertion error:", insertErr);
+      } else {
+        console.log(`[Supabase] Order #${orderNumber} (${razorpay_order_id}) recorded successfully.`);
+      }
     } catch (insertErr) {
       console.error("Supabase order insertion exception:", insertErr);
     }
 
-    await sendOrderAlertEmail({
-      orderId: razorpay_order_id,
-      paymentId,
-      customer,
-      product: {
-        name: productName,
-        quantity,
-        price: `₹${unitPrice.toLocaleString("en-IN")}`,
-        totalAmount,
-      },
-    });
+    try {
+      await sendOrderAlertEmail({
+        orderId: razorpay_order_id,
+        paymentId,
+        customer,
+        product: {
+          name: productName,
+          quantity,
+          price: `₹${unitPrice.toLocaleString("en-IN")}`,
+          totalAmount,
+        },
+      });
+    } catch (emailErr) {
+      console.error("[Email Notification Warning] Order saved but notification email failed:", emailErr);
+    }
 
     return NextResponse.json({
       success: true,

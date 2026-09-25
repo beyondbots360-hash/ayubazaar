@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Gift, Sparkles } from "lucide-react";
 import { PRODUCTS, ProductDetail } from "@/data/products";
 import { motion } from "framer-motion";
 
@@ -50,68 +50,122 @@ export default function ProductsSection() {
   return (
     <section id="products" className="py-16 sm:py-20 bg-[#F8F5EC] relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Heading */}
         <div className="text-center max-w-2xl mx-auto mb-14">
           <div className="flex items-center justify-center gap-4 mb-2">
             <div className="h-[1px] w-12 sm:w-16 bg-gradient-to-r from-transparent to-[#D6A83F]" />
             <h2 className="text-3xl sm:text-4xl font-serif text-[#174A3A] tracking-tight">
-              Our Products
+              Our Formulations
             </h2>
             <div className="h-[1px] w-12 sm:w-16 bg-gradient-to-l from-transparent to-[#D6A83F]" />
           </div>
           <p className="text-xs sm:text-sm font-semibold tracking-[0.18em] text-[#78857C] uppercase">
-            Three Special Products for a Healthier You
+            Three Pure Ayurvedic Systems for Vitality, Digestion & Metabolic Wellness
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-8">
-          {products.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6, delay: index * 0.15 }}
-              whileHover={{ y: -6 }}
-              className="group bg-[#FAF7F0] rounded-3xl p-5 border border-[#E9E2D1] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
-            >
-              <div>
-                <div className="relative w-full h-52 sm:h-56 rounded-2xl overflow-hidden bg-white/90 border border-[#EBE4D5] mb-6 flex items-center justify-center">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
-                  />
+        {/* 3 Core Product Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          {products.map((product, index) => {
+            const isYameny = product.slug === "yameny-khalta";
+
+            return (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6, delay: index * 0.15 }}
+                whileHover={{ y: -6 }}
+                className="group bg-[#FAF7F0] rounded-3xl p-6 sm:p-7 border border-[#E9E2D1] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
+              >
+                {/* Special Combo Badge for Yameny Khalta */}
+                {isYameny && (
+                  <div className="absolute top-4 right-4 z-10">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#D6A83F] to-[#C2932E] text-[#11382C] text-[11px] font-bold shadow-sm uppercase tracking-wider">
+                      <Gift className="w-3.5 h-3.5" />
+                      <span>FREE Lava 31 Gold</span>
+                    </span>
+                  </div>
+                )}
+
+                <div>
+                  {/* Image Container with Subtle Combo Display */}
+                  <div className="relative w-full h-64 sm:h-72 rounded-2xl overflow-hidden bg-white/95 border border-[#EBE4D5] mb-6 flex items-center justify-center p-2">
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      className="object-contain p-1 group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <div className="text-center px-2">
+                    <div className="mb-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#A47128]">
+                        {product.category}
+                      </span>
+                    </div>
+
+                    <h3 className="text-2xl font-serif font-bold text-[#174A3A] tracking-tight mb-2">
+                      {product.name}
+                    </h3>
+
+                    {isYameny && (
+                      <div className="inline-flex items-center gap-1.5 text-xs text-[#2E3C32] font-semibold bg-[#FAF0E6] px-3 py-1 rounded-full border border-[#E8D7C2] mb-3">
+                        <Sparkles className="w-3.5 h-3.5 text-[#D6A83F]" />
+                        <span>Includes Full-Size Lava 31 Gold Oil (Worth ₹1,899) FREE</span>
+                      </div>
+                    )}
+
+                    <p className="text-sm text-[#546056] leading-relaxed line-clamp-3 mb-6 font-normal">
+                      {product.description}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="text-center px-2">
-                  <h3 className="text-xl font-serif font-bold text-[#174A3A] tracking-tight mb-2.5">
-                    {product.name}
-                  </h3>
-                  <p className="text-sm text-[#546056] leading-relaxed line-clamp-3 mb-6 font-normal">
-                    {product.description}
-                  </p>
+                {/* Price and Action Buttons */}
+                <div className="pt-2 border-t border-[#EBE4D5]/80">
+                  <div className="flex items-center justify-between mb-4 px-1">
+                    <div>
+                      <span className="text-xs text-[#78857C] block font-medium">Segment Price</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-xl font-serif font-bold text-[#174A3A]">
+                          {product.price}
+                        </span>
+                        <span className="text-xs text-[#8C988F] line-through">
+                          {product.originalPrice}
+                        </span>
+                      </div>
+                    </div>
+                    {product.discount && (
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#EBF2EC] text-[#2E6B47] border border-[#D5E3D7]">
+                        {product.discount}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                    <Link
+                      href={`/products/${product.slug}`}
+                      className="w-full sm:w-1/2 inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-full bg-white border border-[#DCD5C3] text-[#174A3A] text-xs font-bold hover:bg-[#EFE8D8] transition-all duration-300"
+                    >
+                      <span>View Details</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-[#D6A83F]" />
+                    </Link>
+
+                    <Link
+                      href={`/checkout?product=${product.slug}&qty=1`}
+                      className="w-full sm:w-1/2 inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-full bg-[#174A3A] text-white text-xs font-bold shadow-sm hover:bg-[#10362A] hover:shadow-md transition-all duration-300 group/btn"
+                    >
+                      <span>Buy Now • {product.price}</span>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2 pb-2">
-                <Link
-                  href={`/products/${product.slug}`}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-full bg-white border border-[#DCD5C3] text-[#174A3A] text-xs font-bold hover:bg-[#EFE8D8] transition-all duration-300"
-                >
-                  <span>View Details</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#D6A83F]" />
-                </Link>
-
-                <Link
-                  href={`/checkout?product=${product.slug}&qty=1`}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-full bg-[#174A3A] text-white text-xs font-bold shadow-xs hover:bg-[#10362A] hover:shadow-md transition-all duration-300 group/btn"
-                >
-                  <span>Buy Now • {product.price}</span>
-                </Link>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>

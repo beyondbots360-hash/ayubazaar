@@ -58,6 +58,36 @@ export default function OrderSummaryCard({
         </div>
       </div>
 
+      {/* Included Free Gift Line Item for Yameny Khalta */}
+      {product.slug === "yameny-khalta" && (
+        <div className="p-3 rounded-2xl bg-[#D6A83F]/10 border border-[#D6A83F]/30 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="relative w-10 h-10 rounded-lg bg-white border border-[#D6A83F]/30 overflow-hidden shrink-0">
+              <Image
+                src="/images/products/lava-31-gold.png"
+                alt="Free Lava 31 Gold"
+                fill
+                className="object-contain p-1"
+              />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#11382C] bg-[#D6A83F]/30 px-1.5 py-0.2 rounded">
+                  Included Free
+                </span>
+              </div>
+              <span className="text-xs font-serif font-bold text-[#174A3A] block">
+                Lava 31 Gold Oil ({quantity} {quantity > 1 ? "Bottles" : "Bottle"})
+              </span>
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <span className="text-xs font-bold text-[#2E6B47]">FREE</span>
+            <span className="text-[10px] text-[#8A958D] line-through block">₹{1899 * quantity}</span>
+          </div>
+        </div>
+      )}
+
       {/* Quantity Selector */}
       <div className="flex items-center justify-between py-3 border-y border-[#E8E1CE] text-sm">
         <span className="font-semibold text-[#252A26]">Quantity</span>
