@@ -64,6 +64,7 @@ function CheckoutContent() {
               price: `₹${Number(dbItem.price).toLocaleString("en-IN")}`,
               originalPrice: `₹${Number(dbItem.original_price).toLocaleString("en-IN")}`,
               discount,
+              inStock: dbItem.in_stock !== undefined ? Boolean(dbItem.in_stock) : prev.inStock,
             }));
           }
         }
@@ -130,6 +131,12 @@ function CheckoutContent() {
 
   const handleProceedToPay = async () => {
     setServerError(null);
+
+    if (product.inStock === false) {
+      setServerError("This formulation is currently out of stock and cannot be purchased.");
+      return;
+    }
+
     if (!validateForm()) {
       window.scrollTo({ top: 120, behavior: "smooth" });
       return;
@@ -305,6 +312,23 @@ function CheckoutContent() {
             <div>
               <p className="font-bold text-red-900">Payment Notice</p>
               <p className="mt-0.5 text-xs text-red-700 leading-relaxed">{serverError}</p>
+            </div>
+          </div>
+        )}
+
+        {product.inStock === false && (
+          <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 flex items-start gap-3.5 text-amber-900 shadow-xs">
+            <AlertCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-sm">Product Currently Out of Stock</p>
+              <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
+                <strong>{product.name}</strong> is currently unavailable for order due to high demand. Please explore other available formulations.
+              </p>
+              <div className="mt-2.5">
+                <Link href="/#products" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#174A3A] underline hover:text-[#10362A]">
+                  ← Browse Available Formulations
+                </Link>
+              </div>
             </div>
           </div>
         )}

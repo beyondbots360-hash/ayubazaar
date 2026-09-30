@@ -51,12 +51,14 @@ export interface ProductDetail {
     description: string;
     image: string;
   };
+  inStock?: boolean;
 }
 
 export const PRODUCTS: ProductDetail[] = [
   {
     id: "yameny-khalta",
     slug: "yameny-khalta",
+    inStock: true,
     name: "Yameny Khalta with Honey",
     subtitle: "Traditional Royal Sidr Honey & Vitality Elixir (Includes FREE Lava 31 Gold)",
     category: "Rasayana & Vitality Tonic",
@@ -200,6 +202,7 @@ export const PRODUCTS: ProductDetail[] = [
   {
     id: "shivshakti-churna",
     slug: "shivshakti-churna",
+    inStock: false,
     name: "Shivshakti Ayurvedic Churna",
     subtitle: "Herbal Digestive & Detox Wellness Powder",
     category: "Deepana & Pachana Detox",
@@ -336,13 +339,14 @@ export const PRODUCTS: ProductDetail[] = [
   {
     id: "rahmorid-sugar-powder",
     slug: "rahmorid-sugar-powder",
+    inStock: true,
     name: "Rahmorid Sugar Powder",
     subtitle: "Ayurvedic Blood Sugar & Metabolic Health Formulation",
     category: "Madhumeha & Glucose Care",
     dosha: "Balances Kapha & Pitta",
-    price: "₹899",
-    originalPrice: "₹1,299",
-    discount: "Save 31%",
+    price: "₹1,499",
+    originalPrice: "₹1,899",
+    discount: "Save 21%",
     rating: 4.8,
     reviewCount: 214,
     image: "/images/products/rahmorid-sugar-powder.jpg",

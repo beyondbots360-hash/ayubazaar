@@ -37,6 +37,7 @@ export default function ProductsSection() {
                   originalPrice: `₹${Number(dbItem.original_price).toLocaleString("en-IN")}`,
                   discount,
                   description: dbItem.description || staticItem.description,
+                  inStock: dbItem.in_stock !== undefined ? Boolean(dbItem.in_stock) : staticItem.inStock,
                 };
               }
               return staticItem;
@@ -68,6 +69,7 @@ export default function ProductsSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {products.map((product, index) => {
             const isYameny = product.slug === "yameny-khalta";
+            const isOutOfStock = product.inStock === false;
 
             return (
               <motion.div
@@ -76,11 +78,22 @@ export default function ProductsSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.6, delay: index * 0.15 }}
-                whileHover={{ y: -6 }}
-                className="group bg-[#FAF7F0] rounded-3xl p-6 sm:p-7 border border-[#E9E2D1] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
+                whileHover={isOutOfStock ? {} : { y: -6 }}
+                className={`group bg-[#FAF7F0] rounded-3xl p-6 sm:p-7 border border-[#E9E2D1] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative overflow-hidden ${
+                  isOutOfStock ? "border-amber-200/80" : ""
+                }`}
               >
+                {/* Out of Stock Badge */}
+                {isOutOfStock && (
+                  <div className="absolute top-4 left-4 z-10">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-[11px] font-bold shadow-sm uppercase tracking-wider">
+                      Out of Stock
+                    </span>
+                  </div>
+                )}
+
                 {/* Special Combo Badge for Yameny Khalta */}
-                {isYameny && (
+                {isYameny && !isOutOfStock && (
                   <div className="absolute top-4 right-4 z-10">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#D6A83F] to-[#C2932E] text-[#11382C] text-[11px] font-bold shadow-sm uppercase tracking-wider">
                       <Gift className="w-3.5 h-3.5" />
@@ -96,16 +109,23 @@ export default function ProductsSection() {
                       src={product.image}
                       alt={product.name}
                       fill
-                      className="object-contain p-1 group-hover:scale-105 transition-transform duration-500"
+                      className={`object-contain p-1 transition-transform duration-500 ${
+                        isOutOfStock ? "opacity-60 grayscale-[30%]" : "group-hover:scale-105"
+                      }`}
                     />
                   </div>
 
                   {/* Content */}
                   <div className="text-center px-2">
-                    <div className="mb-1">
+                    <div className="mb-1 flex items-center justify-center gap-2">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-[#A47128]">
                         {product.category}
                       </span>
+                      {isOutOfStock && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+                          Sold Out
+                        </span>
+                      )}
                     </div>
 
                     <h3 className="text-2xl font-serif font-bold text-[#174A3A] tracking-tight mb-2">
@@ -139,9 +159,14 @@ export default function ProductsSection() {
                         </span>
                       </div>
                     </div>
-                    {product.discount && (
+                    {product.discount && !isOutOfStock && (
                       <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#EBF2EC] text-[#2E6B47] border border-[#D5E3D7]">
                         {product.discount}
+                      </span>
+                    )}
+                    {isOutOfStock && (
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 border border-stone-300">
+                        Out of Stock
                       </span>
                     )}
                   </div>
@@ -155,12 +180,22 @@ export default function ProductsSection() {
                       <ArrowRight className="w-3.5 h-3.5 text-[#D6A83F]" />
                     </Link>
 
-                    <Link
-                      href={`/checkout?product=${product.slug}&qty=1`}
-                      className="w-full sm:w-1/2 inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-full bg-[#174A3A] text-white text-xs font-bold shadow-sm hover:bg-[#10362A] hover:shadow-md transition-all duration-300 group/btn"
-                    >
-                      <span>Buy Now • {product.price}</span>
-                    </Link>
+                    {isOutOfStock ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full sm:w-1/2 inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-full bg-[#E5DFCE] text-[#7A857D] text-xs font-bold cursor-not-allowed border border-[#DCD5C3]"
+                      >
+                        <span>Out of Stock</span>
+                      </button>
+                    ) : (
+                      <Link
+                        href={`/checkout?product=${product.slug}&qty=1`}
+                        className="w-full sm:w-1/2 inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-full bg-[#174A3A] text-white text-xs font-bold shadow-sm hover:bg-[#10362A] hover:shadow-md transition-all duration-300 group/btn"
+                      >
+                        <span>Buy Now • {product.price}</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </motion.div>

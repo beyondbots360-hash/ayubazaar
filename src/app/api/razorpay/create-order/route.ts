@@ -41,6 +41,12 @@ export async function POST(req: NextRequest) {
           { status: 404 }
         );
       }
+      if (staticProduct.inStock === false) {
+        return NextResponse.json(
+          { success: false, error: "Sorry, this product is currently out of stock." },
+          { status: 400 }
+        );
+      }
       unitPrice = parseInt(staticProduct.price.replace(/[^0-9]/g, ""), 10);
       productName = staticProduct.name;
     }

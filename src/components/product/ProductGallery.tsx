@@ -8,13 +8,15 @@ interface ProductGalleryProps {
   image: string;
   name: string;
   badge: string;
+  inStock?: boolean;
 }
 
-export default function ProductGallery({ image, name, badge }: ProductGalleryProps) {
+export default function ProductGallery({ image, name, badge, inStock = true }: ProductGalleryProps) {
   const [isZoomed, setIsZoomed] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!inStock) return;
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
@@ -25,19 +27,29 @@ export default function ProductGallery({ image, name, badge }: ProductGalleryPro
     <div className="space-y-4 select-none">
       {/* Single Dedicated Image Showcase with Zoom */}
       <div
-        className="relative w-full aspect-square sm:aspect-[4/3] rounded-3xl overflow-hidden bg-[#FAF7F0] border border-[#E8E1CE] shadow-sm flex items-center justify-center cursor-crosshair group"
-        onMouseEnter={() => setIsZoomed(true)}
-        onMouseLeave={() => setIsZoomed(false)}
+        className={`relative w-full aspect-square sm:aspect-[4/3] rounded-3xl overflow-hidden bg-[#FAF7F0] border border-[#E8E1CE] shadow-sm flex items-center justify-center group ${
+          inStock ? "cursor-crosshair" : "cursor-default"
+        }`}
+        onMouseEnter={() => inStock && setIsZoomed(true)}
+        onMouseLeave={() => inStock && setIsZoomed(false)}
         onMouseMove={handleMouseMove}
       >
-        {/* Badge */}
-        <div className="absolute top-4 left-4 z-20 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#174A3A] text-white text-xs font-semibold shadow-sm">
-          <Sparkles className="w-3 h-3 text-[#D6A83F]" />
-          <span>{badge}</span>
+        {/* Badges Row */}
+        <div className="absolute top-4 left-4 z-20 flex flex-wrap items-center gap-2">
+          {!inStock ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-600 text-white text-xs font-bold shadow-md uppercase tracking-wider">
+              Out of Stock
+            </span>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#174A3A] text-white text-xs font-semibold shadow-sm">
+              <Sparkles className="w-3 h-3 text-[#D6A83F]" />
+              <span>{badge}</span>
+            </div>
+          )}
         </div>
 
         {/* Normal Image */}
-        <div className="relative w-full h-full p-6 transition-all duration-300">
+        <div className={`relative w-full h-full p-6 transition-all duration-300 ${!inStock ? "opacity-60 grayscale-[30%]" : ""}`}>
           <Image
             src={image}
             alt={name}

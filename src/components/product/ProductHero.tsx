@@ -14,6 +14,8 @@ import {
   ShieldCheck,
   RotateCcw,
   Sparkles,
+  AlertCircle,
+  Clock,
 } from "lucide-react";
 
 interface ProductHeroProps {
@@ -47,10 +49,15 @@ export default function ProductHero({ product }: ProductHeroProps) {
   };
 
   // WhatsApp prefilled message
-  const whatsappMessage = encodeURIComponent(
+  const isOutOfStock = product.inStock === false;
+
+  const whatsappOrderMessage = encodeURIComponent(
     `Hello AyuBazaar! I would like to order *${product.name}* (Quantity: ${quantity}) at ${product.price}. Please assist with my delivery address and payment.`
   );
-  const whatsappUrl = `https://wa.me/918929515262?text=${whatsappMessage}`;
+  const whatsappNotifyMessage = encodeURIComponent(
+    `Hello AyuBazaar! I am interested in *${product.name}* which is currently marked as Out of Stock. Please notify me once fresh stock becomes available.`
+  );
+  const whatsappUrl = `https://wa.me/918929515262?text=${isOutOfStock ? whatsappNotifyMessage : whatsappOrderMessage}`;
 
   return (
     <section className="py-8 sm:py-12 bg-[#F8F5EC]">
@@ -62,12 +69,13 @@ export default function ProductHero({ product }: ProductHeroProps) {
               image={product.image}
               name={product.name}
               badge={product.badge}
+              inStock={product.inStock}
             />
           </div>
 
           {/* Right Column: Details & Ordering */}
           <div className="lg:col-span-6 space-y-6">
-            {/* Category & Dosha Pills */}
+            {/* Category, Dosha & Stock Status Pills */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold tracking-wider text-[#174A3A] bg-[#FAF7F0] border border-[#E5DFCE] px-3 py-1 rounded-full uppercase">
                 {product.category}
@@ -75,6 +83,17 @@ export default function ProductHero({ product }: ProductHeroProps) {
               <span className="text-xs font-medium text-[#A47128] bg-[#FAF0E6] border border-[#EBD7BF] px-3 py-1 rounded-full">
                 {product.dosha}
               </span>
+              {isOutOfStock ? (
+                <span className="text-xs font-bold text-red-700 bg-red-50 border border-red-200 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <span>Out of Stock</span>
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>In Stock</span>
+                </span>
+              )}
             </div>
 
             {/* Product Title & Subtitle */}
@@ -102,8 +121,26 @@ export default function ProductHero({ product }: ProductHeroProps) {
               </span>
             </div>
 
+            {/* Out of Stock Notice Banner */}
+            {isOutOfStock && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/80 border-2 border-amber-300/80 flex items-start gap-3.5 shadow-xs">
+                <AlertCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+                <div className="space-y-1 text-xs sm:text-[13px] leading-relaxed">
+                  <h4 className="font-serif font-bold text-amber-900 text-sm">
+                    Temporarily Unavailable
+                  </h4>
+                  <p className="text-amber-800">
+                    This formulation is currently sold out due to high demand. Our botanical compounding facility is preparing a fresh batch. Orders are temporarily paused.
+                  </p>
+                  <p className="text-amber-700 font-medium pt-0.5">
+                    Click <strong>&quot;Notify on WhatsApp&quot;</strong> below to receive priority notification when stock arrives.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Pricing Block */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F0] border border-[#E9E2D1] space-y-2">
+            <div className={`p-4 sm:p-5 rounded-2xl bg-[#FAF7F0] border border-[#E9E2D1] space-y-2 ${isOutOfStock ? "opacity-75" : ""}`}>
               <div className="flex items-baseline gap-3">
                 <span className="text-3xl sm:text-4xl font-serif font-bold text-[#174A3A]">
                   {product.price}
@@ -149,13 +186,14 @@ export default function ProductHero({ product }: ProductHeroProps) {
             </p>
 
             {/* Quantity Selector */}
-            <div className="flex items-center gap-4 pt-1">
+            <div className={`flex items-center gap-4 pt-1 ${isOutOfStock ? "opacity-40 pointer-events-none select-none" : ""}`}>
               <span className="text-sm font-semibold text-[#252A26]">Quantity:</span>
               <div className="inline-flex items-center rounded-full border border-[#DCD5C3] bg-[#FAF7F0] p-1 shadow-xs">
                 <button
                   type="button"
+                  disabled={isOutOfStock}
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-[#174A3A] hover:bg-[#EFE8D8] font-bold transition-colors"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-[#174A3A] hover:bg-[#EFE8D8] font-bold transition-colors disabled:cursor-not-allowed"
                   aria-label="Decrease quantity"
                 >
                   -
@@ -165,25 +203,40 @@ export default function ProductHero({ product }: ProductHeroProps) {
                 </span>
                 <button
                   type="button"
+                  disabled={isOutOfStock}
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-[#174A3A] hover:bg-[#EFE8D8] font-bold transition-colors"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-[#174A3A] hover:bg-[#EFE8D8] font-bold transition-colors disabled:cursor-not-allowed"
                   aria-label="Increase quantity"
                 >
                   +
                 </button>
               </div>
+              {isOutOfStock && (
+                <span className="text-xs text-[#8A958D] font-medium">Ordering unavailable</span>
+              )}
             </div>
 
             {/* Action Buttons */}
             <div className="space-y-3 pt-2">
-              {/* Buy Now Button */}
-              <Link
-                href={`/checkout?product=${product.slug}&qty=${quantity}`}
-                className="w-full inline-flex items-center justify-center gap-3 py-3.5 px-8 rounded-full bg-[#174A3A] text-white font-semibold text-base shadow-md hover:bg-[#10362A] hover:shadow-xl hover:scale-[1.01] transition-all duration-300"
-              >
-                <ShoppingBag className="w-5 h-5 text-[#D6A83F]" />
-                <span>Buy Now • {product.price}</span>
-              </Link>
+              {/* Buy Now or Out of Stock Button */}
+              {isOutOfStock ? (
+                <button
+                  type="button"
+                  disabled
+                  className="w-full inline-flex items-center justify-center gap-3 py-3.5 px-8 rounded-full bg-[#E5DFCE] text-[#7A857D] font-bold text-base cursor-not-allowed shadow-xs select-none border border-[#DCD5C3]"
+                >
+                  <Clock className="w-5 h-5 text-[#8A958D]" />
+                  <span>Out of Stock • Orders Paused</span>
+                </button>
+              ) : (
+                <Link
+                  href={`/checkout?product=${product.slug}&qty=${quantity}`}
+                  className="w-full inline-flex items-center justify-center gap-3 py-3.5 px-8 rounded-full bg-[#174A3A] text-white font-semibold text-base shadow-md hover:bg-[#10362A] hover:shadow-xl hover:scale-[1.01] transition-all duration-300"
+                >
+                  <ShoppingBag className="w-5 h-5 text-[#D6A83F]" />
+                  <span>Buy Now • {product.price}</span>
+                </Link>
+              )}
 
               {/* Secondary Buttons Row: WhatsApp & Share */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -191,10 +244,14 @@ export default function ProductHero({ product }: ProductHeroProps) {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2.5 py-3 px-5 rounded-full bg-[#25D366]/10 text-[#1E7E34] border border-[#25D366]/30 font-semibold text-sm hover:bg-[#25D366]/20 transition-all"
+                  className={`inline-flex items-center justify-center gap-2.5 py-3 px-5 rounded-full font-semibold text-sm transition-all ${
+                    isOutOfStock
+                      ? "bg-[#25D366]/15 text-[#136C2E] border border-[#25D366]/40 hover:bg-[#25D366]/25"
+                      : "bg-[#25D366]/10 text-[#1E7E34] border border-[#25D366]/30 hover:bg-[#25D366]/20"
+                  }`}
                 >
                   <MessageCircle className="w-4 h-4 text-[#25D366] fill-[#25D366]" />
-                  <span>Order on WhatsApp</span>
+                  <span>{isOutOfStock ? "Notify on WhatsApp" : "Order on WhatsApp"}</span>
                 </a>
 
                 <button

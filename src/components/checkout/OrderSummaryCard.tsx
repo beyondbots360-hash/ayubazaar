@@ -22,11 +22,20 @@ export default function OrderSummaryCard({
   const unitPrice = parseInt(product.price.replace(/[^0-9]/g, ""), 10);
   const total = unitPrice * quantity;
 
+  const isOutOfStock = product.inStock === false;
+
   return (
     <div className="bg-[#FAF7F0] p-6 sm:p-7 rounded-3xl border border-[#E8E1CE] shadow-md space-y-6 sticky top-28">
-      <h2 className="text-lg font-serif font-bold text-[#174A3A] border-b border-[#E5DFCE] pb-3.5">
-        Order Summary
-      </h2>
+      <div className="flex items-center justify-between border-b border-[#E5DFCE] pb-3.5">
+        <h2 className="text-lg font-serif font-bold text-[#174A3A]">
+          Order Summary
+        </h2>
+        {isOutOfStock && (
+          <span className="text-xs font-bold text-red-700 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full uppercase">
+            Out of Stock
+          </span>
+        )}
+      </div>
 
       {/* Product Snapshot */}
       <div className="flex items-center gap-4">
@@ -35,7 +44,7 @@ export default function OrderSummaryCard({
             src={product.image}
             alt={product.name}
             fill
-            className="object-contain p-1.5"
+            className={`object-contain p-1.5 ${isOutOfStock ? "opacity-60 grayscale-[30%]" : ""}`}
           />
         </div>
 
@@ -51,15 +60,22 @@ export default function OrderSummaryCard({
             <span className="text-xs text-[#8A958D] line-through">
               {product.originalPrice}
             </span>
-            <span className="text-[10px] font-bold text-[#3B7A57] bg-[#EBF2EC] px-2 py-0.5 rounded-full">
-              {product.discount}
-            </span>
+            {product.discount && !isOutOfStock && (
+              <span className="text-[10px] font-bold text-[#3B7A57] bg-[#EBF2EC] px-2 py-0.5 rounded-full">
+                {product.discount}
+              </span>
+            )}
+            {isOutOfStock && (
+              <span className="text-[10px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                Unavailable
+              </span>
+            )}
           </div>
         </div>
       </div>
 
       {/* Included Free Gift Line Item for Yameny Khalta */}
-      {product.slug === "yameny-khalta" && (
+      {product.slug === "yameny-khalta" && !isOutOfStock && (
         <div className="p-3 rounded-2xl bg-[#D6A83F]/10 border border-[#D6A83F]/30 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="relative w-10 h-10 rounded-lg bg-white border border-[#D6A83F]/30 overflow-hidden shrink-0">
@@ -89,13 +105,13 @@ export default function OrderSummaryCard({
       )}
 
       {/* Quantity Selector */}
-      <div className="flex items-center justify-between py-3 border-y border-[#E8E1CE] text-sm">
+      <div className={`flex items-center justify-between py-3 border-y border-[#E8E1CE] text-sm ${isOutOfStock ? "opacity-50 pointer-events-none" : ""}`}>
         <span className="font-semibold text-[#252A26]">Quantity</span>
         <div className="inline-flex items-center rounded-full border border-[#DCD5C3] bg-white p-1 shadow-2xs">
           <button
             type="button"
             onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
-            disabled={quantity <= 1 || isLoading}
+            disabled={quantity <= 1 || isLoading || isOutOfStock}
             className="w-7 h-7 rounded-full flex items-center justify-center text-[#174A3A] hover:bg-[#EFE8D8] font-bold transition-colors disabled:opacity-40"
           >
             -
@@ -106,8 +122,8 @@ export default function OrderSummaryCard({
           <button
             type="button"
             onClick={() => onQuantityChange(quantity + 1)}
-            disabled={isLoading}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-[#174A3A] hover:bg-[#EFE8D8] font-bold transition-colors"
+            disabled={isLoading || isOutOfStock}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-[#174A3A] hover:bg-[#EFE8D8] font-bold transition-colors disabled:opacity-40"
           >
             +
           </button>
@@ -134,7 +150,7 @@ export default function OrderSummaryCard({
       </div>
 
       {/* Total Amount Box */}
-      <div className="p-4 rounded-2xl bg-[#174A3A] text-white flex items-center justify-between">
+      <div className={`p-4 rounded-2xl flex items-center justify-between ${isOutOfStock ? "bg-stone-700 text-white" : "bg-[#174A3A] text-white"}`}>
         <div>
           <p className="text-xs text-[#C7D4CA]">Total Payable</p>
           <p className="text-2xl font-serif font-bold text-[#D6A83F]">
@@ -142,30 +158,40 @@ export default function OrderSummaryCard({
           </p>
         </div>
         <div className="text-right text-[11px] text-[#A6C0AF]">
-          <span>All taxes included</span>
+          <span>{isOutOfStock ? "Orders paused" : "All taxes included"}</span>
         </div>
       </div>
 
       {/* Pay with Razorpay Button */}
       <div>
-        <button
-          type="button"
-          onClick={onProceedToPay}
-          disabled={isLoading}
-          className="w-full py-4 px-6 rounded-full bg-[#174A3A] hover:bg-[#10362A] text-white font-bold text-sm sm:text-base shadow-md hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin text-[#D6A83F]" />
-              <span>Initiating Secure Payment...</span>
-            </>
-          ) : (
-            <>
-              <Lock className="w-4 h-4 text-[#D6A83F]" />
-              <span>Pay via Razorpay • ₹{total.toLocaleString("en-IN")}</span>
-            </>
-          )}
-        </button>
+        {isOutOfStock ? (
+          <button
+            type="button"
+            disabled
+            className="w-full py-4 px-6 rounded-full bg-[#E5DFCE] text-[#7A857D] font-bold text-sm sm:text-base border border-[#DCD5C3] cursor-not-allowed shadow-none"
+          >
+            <span>Product Out of Stock • Orders Paused</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onProceedToPay}
+            disabled={isLoading}
+            className="w-full py-4 px-6 rounded-full bg-[#174A3A] hover:bg-[#10362A] text-white font-bold text-sm sm:text-base shadow-md hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin text-[#D6A83F]" />
+                <span>Initiating Secure Payment...</span>
+              </>
+            ) : (
+              <>
+                <Lock className="w-4 h-4 text-[#D6A83F]" />
+                <span>Pay via Razorpay • ₹{total.toLocaleString("en-IN")}</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Payment Security Badges */}

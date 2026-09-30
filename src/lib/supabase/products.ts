@@ -92,6 +92,7 @@ export function mapDbProductToDetail(
     ingredients,
     usageSteps,
     faqs,
+    inStock: p.in_stock !== undefined ? Boolean(p.in_stock) : (fallbackDetail?.inStock ?? true),
   };
 }
 
